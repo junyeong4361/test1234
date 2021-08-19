@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC
+        "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dev.yhp.fin.mappers.ISecurityMapper">
+    <insert id="insertBlockedIp">
+        INSERT INTO `fin`.`blocked_ips` (`expires_at`, `ip`)
+        VALUES (DATE_ADD(NOW(), INTERVAL #{minutesToBlock} MINUTE), #{clientModel.ip})
+    </insert>
+
+    <insert id="insertIllegalLog">
+        <bind name="_result" value="result.getResult().name().toLowerCase()"/>
+        INSERT INTO `fin`.`illegal_logs` (`ip`, `user_agent`, `request_uri`, `result`)
+        VALUES (#{clientModel.ip}, #{clientModel.userAgent}, #{clientModel.requestUri}, #{_result})
+    </insert>
+
+    <select id="selectIllegalLogCount" resultType="_int">
+        <![CDATA[
+        SELECT COUNT(0)
+        FROM `fin`.`illegal_logs`
+        WHERE `datetime` >= DATE_SUB(NOW(), INTERVAL #{lookBackSeconds} SECOND)
+          AND `ip` = #{clientModel.ip}
+        ]]>
+    </select>
+
+    <select id="selectBlockedIpCount" parameterType="dev.yhp.fin.models.ClientModel" resultType="_int">
+        <![CDATA[
+        SELECT COUNT(0)
+        FROM `fin`.`blocked_ips`
+        WHERE `expires_at` >= NOW()
+          AND `expired_flag` = FALSE
+          AND `ip` = #{ip}
+        ]]>
+    </select>
+
+    <select id="selectBlockedIpCountSoFar" parameterType="dev.yhp.fin.models.ClientModel" resultType="_int">
+        SELECT COUNT(0)
+        FROM `fin`.`blocked_ips`
+        WHERE `ip` = #{ip}
+    </select>
+</mapper>

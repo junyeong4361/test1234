@@ -1,0 +1,19 @@
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>우편번호 테스트</title>
+    <script src="http://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+</head>
+<body>
+<button id="postalButton">우편번호</button>
+<script>
+    window.document.getElementById('postalButton').addEventListener('click', () => {
+        new daum.Postcode({
+            oncomplete: (data) => {
+                console.log(data);
+            }
+        }).open();
+    });
+</script>
+</body>
+</html>

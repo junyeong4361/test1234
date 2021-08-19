@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC
+        "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dev.yhp.fin.mappers.IUserMapper">
+    <insert id="insertLoginLog">
+        <bind name="_result" value="loginVo.getResult().name().toLowerCase()"/>
+        INSERT INTO `fin`.`login_logs` (`ip`, `user_agent`, `email`, `password`, `result`)
+        VALUES (#{clientModel.ip}, #{clientModel.userAgent}, #{loginVo.email}, #{loginVo.hashedPassword}, #{_result})
+    </insert>
+
+    <insert id="insertUser" parameterType="dev.yhp.fin.vos.user.RegisterVo">
+        INSERT INTO `fin`.`users` (`email`, `password`, `nickname`, `name`, `birth`, `gender`, `contact_company`, `contact_first`, `contact_second`, `contact_third`, `address_postal`, `address_primary`, `address_secondary`, `marketing_flag`)
+        VALUES (#{email}, #{hashedPassword}, #{nickname}, #{name}, #{birth}, #{gender}, #{contactCompany}, #{contactFirst}, #{contactSecond}, #{contactThird}, #{addressPostal}, #{addressPrimary}, #{addressSecondary}, #{isMarketing})
+    </insert>
+
+    <insert id="insertPasswordResetKey" parameterType="dev.yhp.fin.entities.PasswordResetKeyEntity">
+        INSERT INTO `fin`.`password_reset_keys` (`created_at`, `expires_at`, `expired_flag`, `key`, `user_email`, `verified_flag`)
+        VALUES (#{createdAt}, #{expiresAt}, #{isExpired}, #{key}, #{userEmail}, #{isVerified})
+    </insert>
+
+    <insert id="insertVerificationCode" parameterType="dev.yhp.fin.vos.user.RegisterVo">
+        INSERT INTO `fin`.`verification_codes` (`expires_at`, `user_email`, `code`)
+        VALUES (DATE_ADD(NOW(), INTERVAL 1 HOUR), #{email}, #{verificationCode})
+    </insert>
+
+    <select id="selectEmailCount"
+            parameterType="string"
+            resultType="_int">
+        SELECT COUNT(0)
+        FROM `fin`.`users`
+        WHERE `email` = #{email}
+    </select>
+
+    <select id="selectNicknameCount"
+            parameterType="string"
+            resultType="_int">
+        SELECT COUNT(0)
+        FROM `fin`.`users`
+        WHERE `nickname` = #{nickname}
+    </select>
+
+    <select id="selectUserByLogin"
+            parameterType="dev.yhp.fin.vos.user.LoginVo"
+            resultType="dev.yhp.fin.entities.UserEntity">
+        SELECT `email`               AS `email`,
+               `created_at`          AS `createdAt`,
+               `updated_at`          AS `updatedAt`,
+               `password`            AS `password`,
+               `nickname`            AS `nickname`,
+               `name`                AS `name`,
+               `birth`               AS `birth`,
+               `gender`              AS `gender`,
+               `contact_company`     AS `contactCompany`,
+               `contact_first`       AS `contactFirst`,
+               `contact_second`      AS `contactSecond`,
+               `contact_third`       AS `contactThird`,
+               `address_postal`      AS `addressPostal`,
+               `address_primary`     AS `addressPrimary`,
+               `address_secondary`   AS `addressSecondary`,
+               `admin_flag`          AS `isAdmin`,
+               `email_verified_flag` AS `isEmailVerified`,
+               `suspended_flag`      AS `isSuspended`,
+               `deleted_flag`        AS `isDeleted`,
+               `marketing_flag`      AS `isMarketing`
+        FROM `fin`.`users`
+        WHERE `email` = #{email}
+          AND `password` = #{hashedPassword}
+        LIMIT 1
+    </select>
+
+    <select id="selectUserByEmailRecover"
+            parameterType="dev.yhp.fin.vos.user.EmailRecoverVo"
+            resultType="dev.yhp.fin.entities.UserEntity">
+        SELECT `email`               AS `email`,
+               `created_at`          AS `createdAt`,
+               `updated_at`          AS `updatedAt`,
+               `password`            AS `password`,
+               `nickname`            AS `nickname`,
+               `name`                AS `name`,
+               `birth`               AS `birth`,
+               `gender`              AS `gender`,
+               `contact_company`     AS `contactCompany`,
+               `contact_first`       AS `contactFirst`,
+               `contact_second`      AS `contactSecond`,
+               `contact_third`       AS `contactThird`,
+               `address_postal`      AS `addressPostal`,
+               `address_primary`     AS `addressPrimary`,
+               `address_secondary`   AS `addressSecondary`,
+               `admin_flag`          AS `isAdmin`,
+               `email_verified_flag` AS `isEmailVerified`,
+               `suspended_flag`      AS `isSuspended`,
+               `deleted_flag`        AS `isDeleted`,
+               `marketing_flag`      AS `isMarketing`
+        FROM `fin`.`users`
+        WHERE `name` = #{name}
+          AND `birth` = #{birth}
+          AND `gender` = #{gender}
+          AND `contact_company` = #{contactCompany}
+          AND `contact_first` = #{contactFirst}
+          AND `contact_second` = #{contactSecond}
+          AND `contact_third` = #{contactThird}
+        LIMIT 1
+    </select>
+
+    <select id="selectUserByEmailVerification"
+            parameterType="dev.yhp.fin.entities.VerificationCodeEntity"
+            resultType="dev.yhp.fin.entities.UserEntity">
+        <![CDATA[
+        SELECT `user`.`email`               AS `email`,
+               `user`.`created_at`          AS `createdAt`,
+               `user`.`updated_at`          AS `updatedAt`,
+               `user`.`password`            AS `password`,
+               `user`.`nickname`            AS `nickname`,
+               `user`.`name`                AS `name`,
+               `user`.`birth`               AS `birth`,
+               `user`.`gender`              AS `gender`,
+               `user`.`contact_company`     AS `contactCompany`,
+               `user`.`contact_first`       AS `contactFirst`,
+               `user`.`contact_second`      AS `contactSecond`,
+               `user`.`contact_third`       AS `contactThird`,
+               `user`.`address_postal`      AS `addressPostal`,
+               `user`.`address_primary`     AS `addressPrimary`,
+               `user`.`address_secondary`   AS `addressSecondary`,
+               `user`.`admin_flag`          AS `isAdmin`,
+               `user`.`email_verified_flag` AS `isEmailVerified`,
+               `user`.`suspended_flag`      AS `isSuspended`,
+               `user`.`deleted_flag`        AS `isDeleted`,
+               `user`.`marketing_flag`      AS `isMarketing`
+        FROM `fin`.`verification_codes` AS `code`
+                 LEFT JOIN `fin`.`users` AS `user` ON `code`.`user_email` = `user`.`email`
+        WHERE `code`.`created_at` <= NOW()
+          AND `code`.`expires_at` >= NOW()
+          AND `code`.`expired_flag` = FALSE
+          AND `code`.`code` = #{code}
+        LIMIT 1
+        ]]>
+    </select>
+
+    <select id="selectUserByPasswordRecover"
+            parameterType="dev.yhp.fin.vos.user.PasswordRecoverVo"
+            resultType="dev.yhp.fin.entities.UserEntity">
+        SELECT `email`               AS `email`,
+               `created_at`          AS `createdAt`,
+               `updated_at`          AS `updatedAt`,
+               `password`            AS `password`,
+               `nickname`            AS `nickname`,
+               `name`                AS `name`,
+               `birth`               AS `birth`,
+               `gender`              AS `gender`,
+               `contact_company`     AS `contactCompany`,
+               `contact_first`       AS `contactFirst`,
+               `contact_second`      AS `contactSecond`,
+               `contact_third`       AS `contactThird`,
+               `address_postal`      AS `addressPostal`,
+               `address_primary`     AS `addressPrimary`,
+               `address_secondary`   AS `addressSecondary`,
+               `admin_flag`          AS `isAdmin`,
+               `email_verified_flag` AS `isEmailVerified`,
+               `suspended_flag`      AS `isSuspended`,
+               `deleted_flag`        AS `isDeleted`,
+               `marketing_flag`      AS `isMarketing`
+        FROM `fin`.`users`
+        WHERE `email` = #{email}
+          AND `name` = #{name}
+          AND `birth` = #{birth}
+          AND `gender` = #{gender}
+          AND `contact_company` = #{contactCompany}
+          AND `contact_first` = #{contactFirst}
+          AND `contact_second` = #{contactSecond}
+          AND `contact_third` = #{contactThird}
+        LIMIT 1
+    </select>
+
+    <select id="selectUserByPasswordReset" parameterType="dev.yhp.fin.vos.user.PasswordResetVo" resultType="dev.yhp.fin.entities.UserEntity">
+        <![CDATA[
+        SELECT `user`.`email`               AS `email`,
+               `user`.`created_at`          AS `createdAt`,
+               `user`.`updated_at`          AS `updatedAt`,
+               `user`.`password`            AS `password`,
+               `user`.`nickname`            AS `nickname`,
+               `user`.`name`                AS `name`,
+               `user`.`birth`               AS `birth`,
+               `user`.`gender`              AS `gender`,
+               `user`.`contact_company`     AS `contactCompany`,
+               `user`.`contact_first`       AS `contactFirst`,
+               `user`.`contact_second`      AS `contactSecond`,
+               `user`.`contact_third`       AS `contactThird`,
+               `user`.`address_postal`      AS `addressPostal`,
+               `user`.`address_primary`     AS `addressPrimary`,
+               `user`.`address_secondary`   AS `addressSecondary`,
+               `user`.`admin_flag`          AS `isAdmin`,
+               `user`.`email_verified_flag` AS `isEmailVerified`,
+               `user`.`suspended_flag`      AS `isSuspended`,
+               `user`.`deleted_flag`        AS `isDeleted`,
+               `user`.`marketing_flag`      AS `isMarketing`
+        FROM `fin`.`password_reset_keys` AS `resetKey`
+                 LEFT JOIN `fin`.`users` AS `user` ON `resetKey`.`user_email` = `user`.`email`
+        WHERE `resetKey`.`created_at` <= NOW()
+          AND `resetKey`.`expires_at` >= NOW()
+          AND `resetKey`.`expired_flag` = FALSE
+          AND `resetKey`.`key` = #{key}
+          AND `resetKey`.`verified_flag` = TRUE
+        LIMIT 1
+        ]]>
+    </select>
+
+    <update id="updateEmailVerificationCodeExpired" parameterType="dev.yhp.fin.entities.VerificationCodeEntity">
+        <![CDATA[
+        UPDATE `fin`.`verification_codes`
+        SET `expired_flag` = TRUE
+        WHERE `code` = #{code}
+        LIMIT 1
+        ]]>
+    </update>
+
+    <update id="updatePasswordResetKeyExpired" parameterType="dev.yhp.fin.entities.PasswordResetKeyEntity">
+        <![CDATA[
+        UPDATE `fin`.`password_reset_keys`
+        SET `expired_flag` = TRUE
+        WHERE `expires_at` >= NOW()
+          AND `expired_flag` = FALSE
+          AND `key` = #{key}
+        LIMIT 1
+        ]]>
+    </update>
+
+    <update id="updatePasswordResetKeyVerified" parameterType="dev.yhp.fin.entities.PasswordResetKeyEntity">
+        <![CDATA[
+        UPDATE `fin`.`password_reset_keys`
+        SET `verified_flag` = TRUE
+        WHERE `expires_at` >= NOW()
+          AND `expired_flag` = FALSE
+          AND `key` = #{key}
+        LIMIT 1
+        ]]>
+    </update>
+
+    <update id="updateUser" parameterType="dev.yhp.fin.entities.UserEntity">
+        UPDATE `fin`.`users`
+        SET `updated_at`          = NOW(),
+            `password`            = #{password},
+            `nickname`            = #{nickname},
+            `name`                = #{name},
+            `birth`               = #{birth},
+            `gender`              = #{gender},
+            `contact_company`     = #{contactCompany},
+            `contact_first`       = #{contactFirst},
+            `contact_second`      = #{contactSecond},
+            `contact_third`       = #{contactThird},
+            `address_postal`      = #{addressPostal},
+            `address_primary`     = #{addressPrimary},
+            `address_secondary`   = #{addressSecondary},
+            `admin_flag`          = #{isAdmin},
+            `email_verified_flag` = #{isEmailVerified},
+            `suspended_flag`      = #{isSuspended},
+            `deleted_flag`        = #{isDeleted},
+            `marketing_flag`      = #{isMarketing}
+        WHERE `email` = #{email}
+        LIMIT 1
+    </update>
+</mapper>

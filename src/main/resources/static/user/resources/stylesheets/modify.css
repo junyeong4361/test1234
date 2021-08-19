@@ -1,0 +1,26 @@
+body.modify .input-message {
+    display: none;
+    margin-left: 0.5rem;
+}
+
+body.modify .input-message.good {
+    color: #77a518;
+    display: inline;
+}
+
+body.modify .input-message.warning {
+    color: #c91e1e;
+    display: inline;
+}
+
+body.modify th {
+    padding-right: 0.5rem;
+}
+
+body.modify input + br {
+    line-height: 275%;
+}
+
+body.modify .final-buttons {
+    margin-top: 1.5rem;
+}

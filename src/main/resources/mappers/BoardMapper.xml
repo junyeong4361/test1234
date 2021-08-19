@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC
+        "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dev.yhp.fin.mappers.IBoardMapper">
+    <select id="selectArticle" parameterType="dev.yhp.fin.entities.ArticleEntity" resultType="dev.yhp.fin.entities.ArticleEntity">
+        SELECT `article`.`index`        AS `index`,
+               `article`.`user_email`   AS `userEmail`,
+               `user`.`nickname`        AS `userNickname`,
+               `article`.`board_code`   AS `boardCode`,
+               `article`.`created_at`   AS `createdAt`,
+               `article`.`updated_at`   AS `updatedAt`,
+               `article`.`title`        AS `title`,
+               `article`.`content`      AS `content`,
+               `article`.`view`         AS `view`,
+               `article`.`deleted_flag` AS `isDeleted`
+        FROM `fin`.`articles` AS `article`
+                 LEFT JOIN `fin`.`users` AS `user` ON `article`.`user_email` = `user`.`email`
+        WHERE `article`.`index` = #{index}
+        LIMIT 1
+    </select>
+
+    <select id="selectArticlesByList" parameterType="dev.yhp.fin.vos.board.ListVo" resultType="dev.yhp.fin.entities.ArticleEntity">
+        SELECT `article`.`index`        AS `index`,
+               `article`.`user_email`   AS `userEmail`,
+               `user`.`nickname`        AS `userNickname`,
+               `article`.`board_code`   AS `boardCode`,
+               `article`.`created_at`   AS `createdAt`,
+               `article`.`updated_at`   AS `updatedAt`,
+               `article`.`title`        AS `title`,
+               `article`.`view`         AS `view`,
+               `article`.`deleted_flag` AS `isDeleted`
+        FROM `fin`.`articles` AS `article`
+                 LEFT JOIN `fin`.`users` AS `user` ON `article`.`user_email` = `user`.`email`
+        WHERE `article`.`board_code` = #{code}
+          AND `article`.`deleted_flag` = FALSE
+        ORDER BY `article`.`index` DESC
+        LIMIT ${queryLimit} OFFSET ${queryOffset}
+    </select>
+
+    <select id="selectArticleCount" parameterType="dev.yhp.fin.entities.BoardEntity" resultType="_int">
+        SELECT COUNT(0)
+        FROM `fin`.`articles`
+        WHERE `board_code` = #{code}
+    </select>
+
+    <select id="selectArticleCountGreaterThan" parameterType="dev.yhp.fin.entities.ArticleEntity" resultType="_int">
+        SELECT COUNT(0)
+        FROM `fin`.`articles`
+        WHERE `board_code` = #{boardCode}
+          AND `index` >= #{index}
+    </select>
+
+    <select id="selectBoard" parameterType="dev.yhp.fin.interfaces.IBoard" resultType="dev.yhp.fin.entities.BoardEntity">
+        SELECT `code`                   AS `code`,
+               `name`                   AS `name`,
+               `read_forbidden_flag`    AS `isReadForbidden`,
+               `write_forbidden_flag`   AS `isWriteForbidden`,
+               `comment_forbidden_flag` AS `isCommentForbidden`
+        FROM `fin`.`boards`
+        WHERE `code` = #{boardCode}
+        LIMIT 1
+    </select>
+
+    <update id="updateArticleView" parameterType="dev.yhp.fin.entities.ArticleEntity">
+        UPDATE `fin`.`articles`
+        SET `view` = `view` + 1
+        WHERE `index` = #{index}
+        LIMIT 1
+    </update>
+</mapper>
